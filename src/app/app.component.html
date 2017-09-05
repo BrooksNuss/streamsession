@@ -1,8 +1,49 @@
-<div style="text-align:center">
-  <h1>{{title}}</h1>
-  <nav _ngcontent-c1 class="docs-navbar">
-    <a routerLink="/dashboard">Dashboard</a>
-    <a routerLink="/test">Test</a>
+<nav class="navbar fixed-top navbar-dark" style=" text-align: left">
+	<span class="title">{{title}}</span>
+  <nav md-tab-nav-bar color="accent">
+    <a md-tab-link
+      *ngFor="let link of navLinks"
+      [routerLink]="link.route"
+      routerLinkActive #rla="routerLinkActive"
+      [active]="rla.isActive">
+      {{link.label}}
+    </a>
   </nav>
+  <!-- <md-tab-group>
+    <md-tab label="Dashboard">
+      <a routerLink="/dashboard"></a>
+    </md-tab>
+    <md-tab label="Test">
+      <a routerLink="/test"></a>
+    </md-tab>
+  </md-tab-group> -->
+  <button md-icon-button [mdMenuTriggerFor]="menu">
+    <md-icon>more_vert</md-icon>
+  </button>
+  <md-menu #menu="mdMenu">
+    <button md-menu-item>
+      <md-icon>fingerprint</md-icon>
+      <span>Login</span>
+    </button>
+    <button md-menu-item disabled>
+      <md-icon>announcement</md-icon>
+      <span>Issues</span>
+    </button>
+    <button md-menu-item>
+      <md-icon>notifications_off</md-icon>
+      <span>Disable alerts</span>
+    </button>
+  </md-menu>
+</nav>
+<div class="outlet">
+	<router-outlet *ngIf="audioInitCheck"></router-outlet>
 </div>
-<router-outlet></router-outlet>
+<section class="footer" id="footer">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-xs-12">
+        <br>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,9 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
-@import "~@angular/material/prebuilt-themes/deeppurple-amber.css";
+/*@import "~@angular/material/prebuilt-themes/deeppurple-amber.css";*/
 body {
-	padding-left: 100px;
-	padding-right: 100px;
 	background-color: #c8c8c8;
+	padding-top: 90px;
 }
 
 .spacer {
@@ -11,6 +10,26 @@ body {
     -ms-flex: 1 1 auto;
     flex: 1 1 auto;
 }
-.mat-tab-label-container {
-    background-color: white;
+
+.title{
+	font-size: 1.6em;
+	color: white;
+}
+
+.navbar {
+	background-color: #222;
+	padding: 0px 10px 0px 10px;
+}
+
+.navbar a{
+	color: white;
+}
+
+.outlet{
+	padding-left: 100px;
+	padding-right: 100px;
+}
+
+.full-width {
+	width: 100%;
 }

@@ -1,8 +1,8 @@
-import { Component, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, AfterViewInit, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { AudioContextService } from '../audiocontext.service';
-
-let WIDTH = 600;
-let HEIGHT = 200;
+import { HttpClient } from '@angular/common/http';
+import { Pedal } from '../pedals/pedal';
+import { DistortionPedal } from '../pedals/distortion.pedal';
 
 @Component({
   selector: 'test',
@@ -11,78 +11,99 @@ let HEIGHT = 200;
 })
 
 
-export class TestComponent implements AfterViewInit{
+export class TestComponent implements AfterViewInit, OnInit{
 	audioContext:AudioContext;
 	audioSource:MediaStreamAudioSourceNode;
 	analyser:AnalyserNode;
-	distortion:WaveShaperNode;
-	gain:GainNode;
-	reverb:ConvolverNode;
+	distortion:DistortionPedal;
+	// gain:GainNode;
+	// filter:BiquadFilterNode;
+	// reverb:ConvolverNode;
 	bufferLength;
 	dataArray:Float32Array;
+	pedalArr:Pedal[];
 	volume = 50;
 	distVal = 50;
 	reverbVal = 50;
+	animateSwitch;
+	isAnimating = false;
+	canvasElem;
 
-	constructor(private audioContextService: AudioContextService){}
+	constructor(private audioContextService: AudioContextService,
+							private http: HttpClient){}
 
 	@ViewChild("visCanvas") canvas: ElementRef;
 	canvasCtx: CanvasRenderingContext2D;
 
-	ngAfterViewInit() {
-		this.canvasCtx = this.canvas.nativeElement.getContext("2d");
-		this.audioContextService.init().then(mediaStream => {
-			this.audioContext = this.audioContextService.getAudioContext();
-			this.audioSource = this.audioContext.createMediaStreamSource(mediaStream);
-			this.audioContextService.setAudioSource(this.audioSource);
-			this.audioContext = this.audioContextService.getAudioContext();
-			this.audioSource = this.audioContextService.getAudioSource();
-			this.analyser = this.audioContext.createAnalyser();
-			this.distortion = this.audioContext.createWaveShaper();
-			this.distortion.curve = this.makeDistortionCurve(this.distVal);
-			this.distortion.oversample = '2x';
-			this.reverb = this.audioContext.createConvolver();
-			this.gain = this.audioContext.createGain();
-			this.gain.gain.value = .01 * this.volume;
-			//this.analyser.fftSize = 2048;
-			this.dataArray = new Float32Array(this.analyser.fftSize);
-			WIDTH = this.dataArray.length / 2;
-		});
-		//this.canvas.nativeElement.width = WIDTH;
+
+	ngOnInit() {
+		this.pedalArr = [];
+		this.distortion = new DistortionPedal(this.audioContextService);
+		this.pedalArr.push(this.distortion);
 	}
 
-	makeDistortionCurve(amount) {
-		var k = typeof amount === 'number' ? amount : 50,
-    n_samples = 48000,
-    curve = new Float32Array(n_samples),
-    deg = Math.PI / 180,
-    i = 0,
-    x;
-	  for ( ; i < n_samples; ++i ) {
-	    x = i * 2 / n_samples - 1;
-	    curve[i] = ( 3 + k ) * x * 20 * deg / ( Math.PI + k * Math.abs(x) )+.1;
-	  }
-	  return curve;
+	ngAfterViewInit() {
+		this.canvasCtx = this.canvas.nativeElement.getContext("2d");
+		this.canvasElem = this.canvas.nativeElement;
+		this.canvasElem.width*=2;
+		this.canvasElem.height*=2;
+		this.audioContext = this.audioContextService.getAudioContext();
+		this.audioSource = this.audioContextService.getAudioSource();
+		// this.distortion = this.audioContext.createWaveShaper();
+		// this.filter = this.audioContext.createBiquadFilter();
+		// this.gain = this.audioContext.createGain();
+		// this.reverb = this.audioContext.createConvolver();
+		this.analyser = this.audioContext.createAnalyser();
+		//compressor, distortion, eq/filter, pitch, modulation, volume, reverb
+		//distortion
+		this.distortion.setInputNode(this.audioSource);
+		//this.distortion.curve = this.makeDistortionCurve(this.distVal);
+		//filter
+		this.distortion.connectNode(this.audioContext.destination);
+		/*
+		this.filter.type = "lowpass"
+		this.filter.frequency.value = 2000;
+		//gain
+		this.filter.connect(this.gain);
+		this.gain.gain.value = .01 * this.volume;
+		//reverb
+		this.gain.connect(this.reverb);
+		var source = this.audioContext.createBufferSource();
+		this.http.get('/assets/impulses/GuitarHack JJ EDGE-1.wav',
+			{responseType: 'arraybuffer'}).subscribe(data => {
+				this.audioContext.decodeAudioData(data).then((buffer) => {
+					this.reverb.buffer = buffer;
+				})
+			});
+		*/
+		//analyser
+		//this.reverb.connect(this.audioContext.destination);
+		this.distortion.connectNode(this.analyser);
+		this.analyser.fftSize = 2048;
+		this.dataArray = new Float32Array(this.analyser.fftSize);
+		//WIDTH = this.dataArray.length*2 ;/// 2;
 	}
 
 	startMonitoring() {
-	    		this.audioSource.connect(this.distortion);
-	    		this.distortion.connect(this.gain);
-	    		this.gain.connect(this.analyser);
-	    		//this.reverb.connect(this.analyser);
-	    		this.analyser.connect(this.audioContext.destination);
-	    		this.analyser.getFloatTimeDomainData(this.dataArray);
-	    		this.visualize(this);
+		if(!this.isAnimating){
+			this.visualize(this);
+			this.isAnimating = !this.isAnimating;
+		}
 	}
 	stopMonitoring() {
-	    this.audioSource.disconnect(); 
-	    this.audioSource = null; 
+		if(this.isAnimating){
+		  cancelAnimationFrame(this.animateSwitch);
+			this.isAnimating = !this.isAnimating;
+		}
 	}
 	//pass in this as tc so that it can be accessed inside draw()
 	visualize(tc:TestComponent) {
+		var WIDTH = this.canvasElem.width;
+		var HEIGHT = this.canvasElem.height;
 		this.canvasCtx.clearRect(0,0,WIDTH,HEIGHT);
+
 		function draw() {
-			requestAnimationFrame(draw);
+			tc.animateSwitch = requestAnimationFrame(draw);
 			tc.analyser.getFloatTimeDomainData(tc.dataArray);
 			tc.canvasCtx.fillStyle = 'rgb(200,200,200)';
 			tc.canvasCtx.fillRect(0,0,WIDTH,HEIGHT);
@@ -101,14 +122,6 @@ export class TestComponent implements AfterViewInit{
 		  tc.canvasCtx.stroke()
 		};
 		draw();
-	}
-	updateVolume(event: any) {
-		this.volume = event.value;
-		this.gain.gain.value = .01 * this.volume;
-	}
-	updateDistortion(event: any) {
-		this.distVal = event.value;
-		this.distortion.curve = this.makeDistortionCurve(this.distVal);
 	}
 	// updateReverb(event: any) {
 	// 	this.reverbVal = event.value;
