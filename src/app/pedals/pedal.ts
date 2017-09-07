@@ -1,10 +1,13 @@
 import { AudioContextService } from '../audiocontext.service';
 
-export abstract class Pedal {
-	//Input - points to preceding node in the chain
-	input: AudioNode;
-	//Output - points to next node in the chain
-	output: AudioNode;
+export abstract class Pedal implements AudioNode {
+
+	channelCount: number;
+	channelCountMode: any;
+	channelInterpretation: any;
+	context: AudioContext;
+	numberOfInputs: number;
+	numberOfOutputs: number;
 	//BypassToggle - allow this pedal to be bypassed
 	//This causes the pedal's input to be routed directly to the next
 	//	pedal, effectively "turning off" this pedal
@@ -19,41 +22,73 @@ export abstract class Pedal {
 		this.nodeNames = [];
 	}
 
-	//ConnectNode - connect this pedal to the next node in the chain
-	connectNode(node: AudioNode): void {
-		if(this.internalNodes.length>0) {
-			this.internalNodes[this.internalNodes.length-1].connect(node);
-		}
+	addEventListener() {
+
 	}
 
-	//ConnectPedal - connect this pedal to the next pedal in the chain
-	connectPedal(pedal: Pedal): void {
-		if(this.internalNodes.length>0) {
-			pedal.input = this.internalNodes[this.internalNodes.length-1];
-			this.internalNodes[this.internalNodes.length-1].connect(pedal.internalNodes[0]);
+	removeEventListener() {
+
+	}
+
+	dispatchEvent(event: Event): boolean {
+		return true;
+	}
+
+
+
+
+
+
+	//So if you disconnect one, only remove it from the list of pedals,
+	//and maybe add a list of disconnected pedals in case you want to
+	//reconnect it. Removes need for input/output, allows much easier
+	//integration. Standardize connect function. May still have to
+	//manually add the new pedal to the array in the component. Test to
+	//see if effects persist when moving from test to dashboard. Also
+	//check analyser for the same
+
+
+
+
+
+
+
+
+
+
+
+	//Connect - connect this pedal to a node or pedal
+	connect(nodeOrPedal: any): AudioNode {
+		if(nodeOrPedal instanceof AudioNode) {
+			if(this.internalNodes.length>0) {
+				this.internalNodes[this.internalNodes.length-1].connect(nodeOrPedal);
+				this.audioContextService.addNode(nodeOrPedal);
+			}
 		}
+		else if(nodeOrPedal instanceof Pedal) {
+			if(this.internalNodes.length>0) {
+				this.internalNodes[this.internalNodes.length-1].connect(nodeOrPedal.internalNodes[0]);
+				this.audioContextService.addNode(nodeOrPedal);
+			}
+		}
+		return nodeOrPedal;
 	}
 
 	//Disconnect - disconnect this pedal from its input and output nodes
 	disconnect(): void {
-		this.input.disconnect(this.internalNodes[0]);
-		this.output.disconnect(this.internalNodes[this.internalNodes.length-1])
-		this.input.connect(this.output);
-		this.input = null;
+		// this.input.disconnect(this.internalNodes[0]);
+		// this.output.disconnect(this.internalNodes[this.internalNodes.length-1])
+		// this.input.connect(this.output);
+		// this.input = null;
 	}
 
 	bypass(): void {
-		if(this.bypassToggle) {
-			this.input.disconnect(this.internalNodes[0]);
-			this.input.connect(this.output);
-		} else {
-			this.input.disconnect(this.output);
-			this.input.connect(this.internalNodes[0]); 
-		}
-	}
-
-	setInputNode(node: AudioNode): void {
-		this.input = node;
-		node.connect(this.internalNodes[0]);
+		// if(this.bypassToggle) {
+		// 	this.input.disconnect(this.internalNodes[0]);
+		// 	this.input.connect(this.output);
+		// } else {
+		// 	this.input.disconnect(this.output);
+		// 	this.input.connect(this.internalNodes[0]); 
+		// }
 	}
 }

@@ -21,7 +21,6 @@ export class TestComponent implements AfterViewInit, OnInit{
 	// reverb:ConvolverNode;
 	bufferLength;
 	dataArray:Float32Array;
-	pedalArr:Pedal[];
 	volume = 50;
 	distVal = 50;
 	reverbVal = 50;
@@ -37,9 +36,8 @@ export class TestComponent implements AfterViewInit, OnInit{
 
 
 	ngOnInit() {
-		this.pedalArr = [];
 		this.distortion = new DistortionPedal(this.audioContextService);
-		this.pedalArr.push(this.distortion);
+		this.audioContextService.addNode(this.distortion);
 	}
 
 	ngAfterViewInit() {
@@ -56,10 +54,10 @@ export class TestComponent implements AfterViewInit, OnInit{
 		this.analyser = this.audioContext.createAnalyser();
 		//compressor, distortion, eq/filter, pitch, modulation, volume, reverb
 		//distortion
-		this.distortion.setInputNode(this.audioSource);
 		//this.distortion.curve = this.makeDistortionCurve(this.distVal);
+		//this.audioSource.connect(this.distortion.internalNodes[0]);
+		this.distortion.connect(this.audioContext.destination);
 		//filter
-		this.distortion.connectNode(this.audioContext.destination);
 		/*
 		this.filter.type = "lowpass"
 		this.filter.frequency.value = 2000;
@@ -78,7 +76,7 @@ export class TestComponent implements AfterViewInit, OnInit{
 		*/
 		//analyser
 		//this.reverb.connect(this.audioContext.destination);
-		this.distortion.connectNode(this.analyser);
+		this.distortion.connect(this.analyser);
 		this.analyser.fftSize = 2048;
 		this.dataArray = new Float32Array(this.analyser.fftSize);
 		//WIDTH = this.dataArray.length*2 ;/// 2;

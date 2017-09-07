@@ -20,7 +20,6 @@ export class DistortionPedal extends Pedal{
 	Drive = 50;
 	Gain = 50;
 
-
 	constructor(protected audioContextService: AudioContextService){
 		super(audioContextService);
 		this.audioContext = this.audioContextService.getAudioContext();
@@ -38,6 +37,11 @@ export class DistortionPedal extends Pedal{
 		//Gain parameters
 		this.nodeNames.push("Gain");
 		this.volumeNode.gain.value = .01 * this.Gain;
+		this.channelCount = this.internalNodes[0].channelCount;
+		this.channelCountMode = this.internalNodes[0].channelCountMode;
+		this.channelInterpretation = this.internalNodes[0].channelInterpretation;
+		this.numberOfInputs = this.internalNodes[0].numberOfInputs;
+		this.numberOfOutputs = this.internalNodes[0].numberOfOutputs;
 	}
 
 	makeDistortionCurve(amount) {

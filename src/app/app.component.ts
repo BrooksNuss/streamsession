@@ -21,6 +21,7 @@ export class AppComponent {
 			this.audioContext = this.audioContextService.getAudioContext();
 			this.audioSource = this.audioContext.createMediaStreamSource(mediaStream);
 			this.audioContextService.setAudioSource(this.audioSource);
+      this.audioContextService.addNode(this.audioSource);
 			this.audioSource.connect(this.audioContext.destination);
 			this.audioInitCheck = true;
   	});

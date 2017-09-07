@@ -3,7 +3,8 @@ import { Injectable, OnInit }    from '@angular/core';
 @Injectable()
 export class AudioContextService {
 	audioContext: AudioContext;
-	audioSource: MediaStreamAudioSourceNode; 
+	audioSource: MediaStreamAudioSourceNode;
+	pedalArr = [];
 	
 	init(): Promise<MediaStream> {
 		this.audioContext = new AudioContext();
@@ -27,5 +28,14 @@ export class AudioContextService {
 
 	getAudioSource(): MediaStreamAudioSourceNode {
 		return this.audioSource;
+	}
+
+	addNode(pedal: AudioNode): void {
+		this.pedalArr.push(pedal);
+	}
+
+	removeNode(pedal: AudioNode): void {
+		let index = this.pedalArr.indexOf(pedal);
+		this.pedalArr.splice(index, 1);
 	}
 }
