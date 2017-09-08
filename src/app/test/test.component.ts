@@ -27,6 +27,7 @@ export class TestComponent implements AfterViewInit, OnInit{
 	animateSwitch;
 	isAnimating = false;
 	canvasElem;
+	pedalArr;
 
 	constructor(private audioContextService: AudioContextService,
 							private http: HttpClient){}
@@ -37,7 +38,8 @@ export class TestComponent implements AfterViewInit, OnInit{
 
 	ngOnInit() {
 		this.distortion = new DistortionPedal(this.audioContextService);
-		this.audioContextService.addNode(this.distortion);
+		this.audioContextService.addPedal(this.distortion);
+		this.pedalArr = this.audioContextService.getPedalArr();
 	}
 
 	ngAfterViewInit() {
@@ -55,7 +57,7 @@ export class TestComponent implements AfterViewInit, OnInit{
 		//compressor, distortion, eq/filter, pitch, modulation, volume, reverb
 		//distortion
 		//this.distortion.curve = this.makeDistortionCurve(this.distVal);
-		//this.audioSource.connect(this.distortion.internalNodes[0]);
+		this.audioSource.connect(this.distortion.input);
 		this.distortion.connect(this.audioContext.destination);
 		//filter
 		/*

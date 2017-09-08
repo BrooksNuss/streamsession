@@ -1,19 +1,14 @@
 import { AudioContextService } from '../audiocontext.service';
 
-export abstract class Pedal implements AudioNode {
-
-	channelCount: number;
-	channelCountMode: any;
-	channelInterpretation: any;
-	context: AudioContext;
-	numberOfInputs: number;
-	numberOfOutputs: number;
-	//BypassToggle - allow this pedal to be bypassed
-	//This causes the pedal's input to be routed directly to the next
-	//	pedal, effectively "turning off" this pedal
-	bypassToggle: boolean;
+export abstract class Pedal {
+	//powerToggle - turns the pedal's effects on or off
+	//When off, the pedal's input is routed directly to the next
+	//	pedal, effectively bypassing this pedal
+	powerToggle: boolean;
 	//InternalNodes - array of nodes that this pedal consists of
 	internalNodes: AudioNode[];
+	input: AudioNode;
+	output: AudioNode;
 	nodeNames: string[];
 	pedalName: string;
 
@@ -22,17 +17,6 @@ export abstract class Pedal implements AudioNode {
 		this.nodeNames = [];
 	}
 
-	addEventListener() {
-
-	}
-
-	removeEventListener() {
-
-	}
-
-	dispatchEvent(event: Event): boolean {
-		return true;
-	}
 
 
 
@@ -61,34 +45,30 @@ export abstract class Pedal implements AudioNode {
 	connect(nodeOrPedal: any): AudioNode {
 		if(nodeOrPedal instanceof AudioNode) {
 			if(this.internalNodes.length>0) {
-				this.internalNodes[this.internalNodes.length-1].connect(nodeOrPedal);
+				this.output.connect(nodeOrPedal);
 				this.audioContextService.addNode(nodeOrPedal);
 			}
 		}
 		else if(nodeOrPedal instanceof Pedal) {
 			if(this.internalNodes.length>0) {
-				this.internalNodes[this.internalNodes.length-1].connect(nodeOrPedal.internalNodes[0]);
-				this.audioContextService.addNode(nodeOrPedal);
+				this.output.connect(nodeOrPedal.internalNodes[0]);
+				this.audioContextService.addPedal(nodeOrPedal);
 			}
 		}
 		return nodeOrPedal;
 	}
 
 	//Disconnect - disconnect this pedal from its input and output nodes
-	disconnect(): void {
-		// this.input.disconnect(this.internalNodes[0]);
-		// this.output.disconnect(this.internalNodes[this.internalNodes.length-1])
-		// this.input.connect(this.output);
-		// this.input = null;
+	disconnect(destination?: AudioNode, output?: number, input?: number): void {
+		this.output.disconnect(destination, output, input);
 	}
 
-	bypass(): void {
-		// if(this.bypassToggle) {
-		// 	this.input.disconnect(this.internalNodes[0]);
-		// 	this.input.connect(this.output);
-		// } else {
-		// 	this.input.disconnect(this.output);
-		// 	this.input.connect(this.internalNodes[0]); 
-		// }
+	power(): void {
+		//this.audioContextService.powerToggle(this, !this.powerToggle);
+		if(this.powerToggle) {
+			this.audioContextService.powerToggle(this, true);
+		} else {
+			this.audioContextService.powerToggle(this, false);
+		}
 	}
 }
