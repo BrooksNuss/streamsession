@@ -39,7 +39,8 @@ export class TestComponent implements AfterViewInit, OnInit{
 	ngOnInit() {
 		this.distortion = new DistortionPedal(this.audioContextService);
 		this.audioContextService.addPedal(this.distortion);
-		this.pedalArr = this.audioContextService.getPedalArr();
+		this.pedalArr = this.audioContextService.getPedalArr()
+			.filter(node => node instanceof Pedal);
 	}
 
 	ngAfterViewInit() {

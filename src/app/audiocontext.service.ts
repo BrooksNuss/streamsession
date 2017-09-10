@@ -52,12 +52,15 @@ export class AudioContextService {
 	powerToggle(pedal: Pedal, power: boolean): void {
 		let index = this.pedalArr.indexOf(pedal);
 		if(index>0 && index<this.pedalArr.length) {
+			let prevNode = this.pedalArr[index - 1];
+			let nextNode = this.pedalArr[index + 1];
 			if(power) {
-				this.pedalArr[index - 1].connect(pedal);
-				this.pedalArr[index - 1].disconnect(this.pedalArr[index + 1]);
+				//use connect(pedal.input) for everything.
+				this.pedalArr[index - 1].connect(pedal.input);
+				this.pedalArr[index - 1].disconnect(this.pedalArr[index + 1].input);
 			} else {
-				this.pedalArr[index - 1].disconnect(pedal);
-				this.pedalArr[index - 1].connect(this.pedalArr[index + 1]);
+				this.pedalArr[index - 1].disconnect(pedal.input);
+				this.pedalArr[index - 1].connect(this.pedalArr[index + 1].input);
 			}
 		}
 	}

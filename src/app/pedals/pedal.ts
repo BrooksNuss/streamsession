@@ -4,7 +4,7 @@ export abstract class Pedal {
 	//powerToggle - turns the pedal's effects on or off
 	//When off, the pedal's input is routed directly to the next
 	//	pedal, effectively bypassing this pedal
-	powerToggle: boolean;
+	powerToggle = true;
 	//InternalNodes - array of nodes that this pedal consists of
 	internalNodes: AudioNode[];
 	input: AudioNode;
@@ -67,8 +67,10 @@ export abstract class Pedal {
 		//this.audioContextService.powerToggle(this, !this.powerToggle);
 		if(this.powerToggle) {
 			this.audioContextService.powerToggle(this, true);
+			this.powerToggle = !this.powerToggle;
 		} else {
 			this.audioContextService.powerToggle(this, false);
+			this.powerToggle = !this.powerToggle;
 		}
 	}
 }
