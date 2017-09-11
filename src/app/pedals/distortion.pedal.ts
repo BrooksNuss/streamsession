@@ -18,7 +18,7 @@ export class DistortionPedal extends Pedal{
 	//The names of these values should be pushed to nodeNames
 	//	for proper display in the template and updating from template
 	Drive = 50;
-	Gain = 50;
+	Level = 50;
 
 	constructor(protected audioContextService: AudioContextService){
 		super(audioContextService);
@@ -34,9 +34,9 @@ export class DistortionPedal extends Pedal{
 		this.nodeNames.push("Drive");
 		this.distNode.curve = this.makeDistortionCurve(this.Drive);
 		this.distNode.oversample = '4x';
-		//Gain parameters
-		this.nodeNames.push("Gain");
-		this.volumeNode.gain.value = .01 * this.Gain;
+		//Level parameters
+		this.nodeNames.push("Level");
+		this.volumeNode.gain.value = .01 * this.Level;
 		this.input = this.internalNodes[0];
 		this.output = this.internalNodes[this.internalNodes.length-1];
 	}
@@ -58,6 +58,6 @@ export class DistortionPedal extends Pedal{
 	updateValues(event: any, index: number): void {
 		this[this.nodeNames[index]] = event.value;
 		this.distNode.curve = this.makeDistortionCurve(this.Drive);
-		this.volumeNode.gain.value = .01 * this.Gain;
+		this.volumeNode.gain.value = .01 * this.Level;
 	}
 }

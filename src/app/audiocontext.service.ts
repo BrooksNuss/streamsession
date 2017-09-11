@@ -50,18 +50,26 @@ export class AudioContextService {
 	}
 
 	powerToggle(pedal: Pedal, power: boolean): void {
+		//Index of current pedal
 		let index = this.pedalArr.indexOf(pedal);
-		if(index>0 && index<this.pedalArr.length) {
-			let prevNode = this.pedalArr[index - 1];
-			let nextNode = this.pedalArr[index + 1];
-			if(power) {
-				//use connect(pedal.input) for everything.
-				this.pedalArr[index - 1].connect(pedal.input);
-				this.pedalArr[index - 1].disconnect(this.pedalArr[index + 1].input);
-			} else {
-				this.pedalArr[index - 1].disconnect(pedal.input);
-				this.pedalArr[index - 1].connect(this.pedalArr[index + 1].input);
-			}
+		//Preceding and succeeding nodes/pedals
+		let prevNode = this.pedalArr[index - 1];
+		let nextNode = this.pedalArr[index + 1];
+		//Determine if prev/next nodes are nodes or pedals.
+		//If pedals, reference output of prev and input of next
+		if(nextNode instanceof Pedal)
+			nextNode = nextNode.input;
+		if(prevNode instanceof Pedal)
+			prevNode = prevNode.output;
+		//If power is true, turn on the pedal, else turn it off.
+		//This is done by simply bypassing the pedal in the chain.
+		if(power) {
+			//use connect(pedal.input) for everything.
+			prevNode.connect(pedal.input);
+			prevNode.disconnect(nextNode);
+		} else {
+			prevNode.disconnect(pedal.input);
+			prevNode.connect(nextNode);
 		}
 	}
 

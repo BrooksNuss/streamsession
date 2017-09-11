@@ -63,14 +63,9 @@ export abstract class Pedal {
 		this.output.disconnect(destination, output, input);
 	}
 
+	//Toggle pedal power state.
 	power(): void {
-		//this.audioContextService.powerToggle(this, !this.powerToggle);
-		if(this.powerToggle) {
-			this.audioContextService.powerToggle(this, true);
-			this.powerToggle = !this.powerToggle;
-		} else {
-			this.audioContextService.powerToggle(this, false);
-			this.powerToggle = !this.powerToggle;
-		}
+		this.audioContextService.powerToggle(this, !this.powerToggle);
+		this.powerToggle = !this.powerToggle;
 	}
 }
