@@ -4,8 +4,7 @@ import { Pedal } from './pedal';
 
 @Component({
   selector: 'distortion-pedal',
-  templateUrl: './distortion.pedal.html',
-  styleUrls: ['./distortion.pedal.css']
+  templateUrl: './distortion.pedal.html'
 })
 
 export class DistortionPedal extends Pedal{

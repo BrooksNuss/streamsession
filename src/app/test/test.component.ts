@@ -3,6 +3,7 @@ import { AudioContextService } from '../audiocontext.service';
 import { HttpClient } from '@angular/common/http';
 import { Pedal } from '../pedals/pedal';
 import { DistortionPedal } from '../pedals/distortion.pedal';
+import { ReverbPedal } from '../pedals/reverb.pedal';
 
 @Component({
   selector: 'test',
@@ -16,6 +17,7 @@ export class TestComponent implements AfterViewInit, OnInit{
 	audioSource:MediaStreamAudioSourceNode;
 	analyser:AnalyserNode;
 	distortion:DistortionPedal;
+	reverb:ReverbPedal;
 	// gain:GainNode;
 	// filter:BiquadFilterNode;
 	// reverb:ConvolverNode;
@@ -38,7 +40,9 @@ export class TestComponent implements AfterViewInit, OnInit{
 
 	ngOnInit() {
 		this.distortion = new DistortionPedal(this.audioContextService);
+		this.reverb = new ReverbPedal(this.audioContextService);
 		this.audioContextService.addPedal(this.distortion);
+		this.audioContextService.addPedal(this.reverb);
 		this.pedalArr = this.audioContextService.getPedalArr()
 			.filter(node => node instanceof Pedal);
 	}
@@ -59,7 +63,10 @@ export class TestComponent implements AfterViewInit, OnInit{
 		//distortion
 		//this.distortion.curve = this.makeDistortionCurve(this.distVal);
 		this.audioSource.connect(this.distortion.input);
-		this.distortion.connect(this.audioContext.destination);
+		this.distortion.connect(this.reverb);
+		this.reverb.connect(this.audioContext.destination);
+		this.reverb.connect(this.analyser);
+
 		//filter
 		/*
 		this.filter.type = "lowpass"
@@ -79,7 +86,6 @@ export class TestComponent implements AfterViewInit, OnInit{
 		*/
 		//analyser
 		//this.reverb.connect(this.audioContext.destination);
-		this.distortion.connect(this.analyser);
 		this.analyser.fftSize = 2048;
 		this.dataArray = new Float32Array(this.analyser.fftSize);
 		//WIDTH = this.dataArray.length*2 ;/// 2;

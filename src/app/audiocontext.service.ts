@@ -1,11 +1,14 @@
 import { Injectable, OnInit }    from '@angular/core';
 import { Pedal } from './pedals/pedal';
+import { HttpClient } from '@angular/common/http';
 
 @Injectable()
 export class AudioContextService {
 	audioContext: AudioContext;
 	audioSource: MediaStreamAudioSourceNode;
 	pedalArr = [];
+
+	constructor(protected http: HttpClient){}
 	
 	init(): Promise<MediaStream> {
 		this.audioContext = new AudioContext();
@@ -31,6 +34,10 @@ export class AudioContextService {
 		return this.audioSource;
 	}
 
+	getHttpClient(): HttpClient {
+		return this.http;
+	}
+
 	addNode(node: AudioNode): void {
 		this.pedalArr.push(node);
 	}
@@ -53,8 +60,19 @@ export class AudioContextService {
 		//Index of current pedal
 		let index = this.pedalArr.indexOf(pedal);
 		//Preceding and succeeding nodes/pedals
-		let prevNode = this.pedalArr[index - 1];
-		let nextNode = this.pedalArr[index + 1];
+
+
+		//Use a while loop to find next available pedal to connect to.
+		//If none, connect to the node.
+
+
+		let i = index;
+		let prevNode;
+		let nextNode;
+		while(i>0){prevNode = this.pedalArr[index - 1]; i--;}
+		while(i<this.pedalArr.length){nextNode = this.pedalArr[index + 1]; i++;}
+		console.log("prevNode "+prevNode);
+		console.log("nextNode "+nextNode)
 		//Determine if prev/next nodes are nodes or pedals.
 		//If pedals, reference output of prev and input of next
 		if(nextNode instanceof Pedal)

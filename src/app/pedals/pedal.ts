@@ -17,30 +17,6 @@ export abstract class Pedal {
 		this.nodeNames = [];
 	}
 
-
-
-
-
-
-
-	//So if you disconnect one, only remove it from the list of pedals,
-	//and maybe add a list of disconnected pedals in case you want to
-	//reconnect it. Removes need for input/output, allows much easier
-	//integration. Standardize connect function. May still have to
-	//manually add the new pedal to the array in the component. Test to
-	//see if effects persist when moving from test to dashboard. Also
-	//check analyser for the same
-
-
-
-
-
-
-
-
-
-
-
 	//Connect - connect this pedal to a node or pedal
 	connect(nodeOrPedal: any): AudioNode {
 		if(nodeOrPedal instanceof AudioNode) {
@@ -52,7 +28,7 @@ export abstract class Pedal {
 		else if(nodeOrPedal instanceof Pedal) {
 			if(this.internalNodes.length>0) {
 				this.output.connect(nodeOrPedal.internalNodes[0]);
-				this.audioContextService.addPedal(nodeOrPedal);
+				// this.audioContextService.addPedal(nodeOrPedal);
 			}
 		}
 		return nodeOrPedal;
