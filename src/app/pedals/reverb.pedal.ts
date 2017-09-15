@@ -4,7 +4,7 @@ import { Pedal } from './pedal';
 import { HttpClient } from '@angular/common/http';
 
 @Component({
-  selector: 'reverb-pedal',
+  selector: 'Reverb-pedal',
   templateUrl: './reverb.pedal.html'
 })
 
@@ -15,7 +15,7 @@ export class ReverbPedal extends Pedal{
 	volumeNode:GainNode;
 
 	//Adjustable values for this pedal
-	//The names of these values should be pushed to nodeNames
+	//The names of these values should be pushed to nodeData
 	//	for proper display in the template and updating from template
 	Type = 0;
 	Level = 50;
@@ -30,6 +30,7 @@ export class ReverbPedal extends Pedal{
 		this.reverbNode = this.audioContext.createConvolver();
 		this.volumeNode = this.audioContext.createGain();
 
+		this.reverbNode.normalize = false;
 		var source = this.audioContext.createBufferSource();
 		this.http.get('/assets/impulses/GuitarHack JJ EDGE-1.wav',
 			{responseType: 'arraybuffer'}).subscribe(data => {
@@ -42,14 +43,15 @@ export class ReverbPedal extends Pedal{
 
 		this.internalNodes.push(this.reverbNode);
 		this.internalNodes.push(this.reverbNode.connect(this.volumeNode));
-		this.nodeNames.push("Type");
-		this.nodeNames.push("Level");
+		this.nodeData.push({name: "Type", min: 1, max: 5});
+		this.nodeData.push({name: "Level", min: 1, max: 100});
+		for (var node of this.nodeData) {node.default = node.max/2;}
 		this.input = this.internalNodes[0];
 		this.output = this.internalNodes[this.internalNodes.length - 1];
 	}
 
 	updateValues(event: any, index: number): void {
-		this[this.nodeNames[index]] = event.value;
+		this[this.nodeData[index]] = event.value;
 		this.volumeNode.gain.value = .01 * this.Level;
 		//acquire value between 0 and 5
 		//this.Type = this.Type/20;

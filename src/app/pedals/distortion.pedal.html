@@ -1,18 +1,19 @@
 <md-card>
+	<md-card-header>
+    <md-card-title style="font-size: 1.6em;">Distortion</md-card-title>
+    <md-card-subtitle>
+      <button md-button (click)="pedal.power()" 
+      [style.color]="pedal.powerToggle ? 'green' : 'red'">
+        <i class="material-icons md-18">power_settings_new</i>Power
+      </button>
+    </md-card-subtitle>
+  </md-card-header>
 	<md-card-content>
 		<md-grid-list cols="4" rowHeight="200px">
-			<md-grid-tile>
-				<p style="font: Roboto;">Volume</p>
-				<md-slider max="100" min="0" step="1" value="50" vertical (input)="updateVolume($event)"></md-slider>
-			</md-grid-tile>
-			<md-grid-tile>
-				<p style="font: Roboto;">Distortion</p>
-				<md-slider max="100" min="1" step="1" value="50" vertical (input)="updateDistortion($event)"></md-slider>
-			</md-grid-tile>
-			<md-grid-tile>
-				<p style="font: Roboto;">Distortion</p>
-				<md-slider max="100" min="0" step="1" value="50" vertical (input)="updateReverb($event)"></md-slider>
-			</md-grid-tile>
+			<md-grid-tile *ngFor="let node of pedal.nodeNames; let j = index">
+        <p style="font: Roboto;">{{pedal.nodeNames[j]}}</p>
+        <md-slider max="100" min="1" step="1" value="50" vertical (input)="pedal.updateValues($event, j)"></md-slider>
+	    </md-grid-tile>
 		</md-grid-list>
 	</md-card-content>
 </md-card>

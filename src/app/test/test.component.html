@@ -47,16 +47,16 @@
   </md-card-header>
   <md-card-content>
     <md-grid-list cols="4" rowHeight="200px" gutterSize="2px">
-      <md-grid-tile *ngFor="let node of pedal.nodeNames; let j = index">
-        <p style="font: Roboto;">{{pedal.nodeNames[j]}}</p>
-        <md-slider max="100" min="1" step="1" value="50" vertical (input)="pedal.updateValues($event, j)"></md-slider>
+      <md-grid-tile *ngFor="let node of pedal.nodeData; let j = index">
+        <p style="font: Roboto;">{{pedal.nodeData[j].name}}</p>
+        <md-slider max={{pedal.nodeData[j].max}} min={{pedal.nodeData[j].min}} step="1" value={{pedal.nodeData[j].default}} vertical (input)="pedal.updateValues($event, j)"></md-slider>
       </md-grid-tile>
     </md-grid-list>
   </md-card-content>
 </md-card>
 <md-tab-group>
-  <md-tab label="Gallery">
+  <md-tab label="Stuff">
   </md-tab>
-  <md-tab label="Settings">
+  <md-tab label="More Stuff">
   </md-tab>
 </md-tab-group>

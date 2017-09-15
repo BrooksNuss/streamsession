@@ -32,7 +32,7 @@ export class TestComponent implements AfterViewInit, OnInit{
 	pedalArr;
 
 	constructor(private audioContextService: AudioContextService,
-							private http: HttpClient){}
+				private http: HttpClient){}
 
 	@ViewChild("visCanvas") canvas: ElementRef;
 	canvasCtx: CanvasRenderingContext2D;
@@ -43,7 +43,7 @@ export class TestComponent implements AfterViewInit, OnInit{
 		this.reverb = new ReverbPedal(this.audioContextService);
 		this.audioContextService.addPedal(this.distortion);
 		this.audioContextService.addPedal(this.reverb);
-		this.pedalArr = this.audioContextService.getPedalArr()
+		this.pedalArr = this.audioContextService.pedalArr
 			.filter(node => node instanceof Pedal);
 	}
 

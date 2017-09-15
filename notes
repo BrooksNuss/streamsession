@@ -1,0 +1,3 @@
+inside <my-app></my-app> put your elements for loading screen for app.
+like:
+<app> <angular loading wheel or something></> </app>
