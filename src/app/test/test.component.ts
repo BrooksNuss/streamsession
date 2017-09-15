@@ -64,8 +64,9 @@ export class TestComponent implements AfterViewInit, OnInit{
 		//this.distortion.curve = this.makeDistortionCurve(this.distVal);
 		this.audioSource.connect(this.distortion.input);
 		this.distortion.connect(this.reverb);
-		this.reverb.connect(this.audioContext.destination);
 		this.reverb.connect(this.analyser);
+		this.analyser.connect(this.audioContext.destination);
+		this.audioContextService.addNode(this.audioContext.destination);
 
 		//filter
 		/*

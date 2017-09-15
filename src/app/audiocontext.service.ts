@@ -56,6 +56,7 @@ export class AudioContextService {
 		this.pedalArr.splice(index, 1);
 	}
 
+	//Move this to the tones page
 	powerToggle(pedal: Pedal, power: boolean): void {
 		//Index of current pedal
 		let index = this.pedalArr.indexOf(pedal);
@@ -69,10 +70,34 @@ export class AudioContextService {
 		let i = index;
 		let prevNode;
 		let nextNode;
-		while(i>0){prevNode = this.pedalArr[index - 1]; i--;}
-		while(i<this.pedalArr.length){nextNode = this.pedalArr[index + 1]; i++;}
+		while(i>0){
+			i--;
+			if(this.pedalArr[i].powerToggle){
+				prevNode = this.pedalArr[i];
+				break;
+			}
+			else if (this.pedalArr[i] instanceof AudioNode){
+				prevNode = this.pedalArr[i];
+				break;
+			}
+		}
+		if(i==0) prevNode = this.pedalArr[0];
+		i = index;
+		while(i<this.pedalArr.length){
+			i++;
+			if(this.pedalArr[i].powerToggle){
+				nextNode = this.pedalArr[i];
+				break;
+			}
+			else if (this.pedalArr[i] instanceof AudioNode){
+				nextNode = this.pedalArr[i];
+				break;
+			}
+		}
+		if(i==this.pedalArr.length) nextNode = this.pedalArr[this.pedalArr.length-1];
+		console.log("pedarr "+this.pedalArr);
 		console.log("prevNode "+prevNode);
-		console.log("nextNode "+nextNode)
+		console.log("nextNode "+nextNode);
 		//Determine if prev/next nodes are nodes or pedals.
 		//If pedals, reference output of prev and input of next
 		if(nextNode instanceof Pedal)
@@ -85,9 +110,11 @@ export class AudioContextService {
 			//use connect(pedal.input) for everything.
 			prevNode.connect(pedal.input);
 			prevNode.disconnect(nextNode);
+			pedal.connect(nextNode);
 		} else {
 			prevNode.disconnect(pedal.input);
 			prevNode.connect(nextNode);
+			pedal.disconnect(nextNode);
 		}
 	}
 
