@@ -12,7 +12,8 @@ export class AppComponent {
   audioSource: MediaStreamAudioSourceNode;
   audioInitCheck = false;
   navLinks = [{route: "/dashboard", label: "Dashboard"},
-   {route: "/test", label: "Test"}];
+   {route: "/test", label: "Test"},
+   {route: "/chat", label: "Chat"}];
 
   constructor(private audioContextService: AudioContextService){}
 

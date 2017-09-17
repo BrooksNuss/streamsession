@@ -1,3 +1,5 @@
 inside <my-app></my-app> put your elements for loading screen for app.
 like:
 <app> <angular loading wheel or something></> </app>
+
+for the final connection setup, storing a user's connection by using req.ip and then using that to send them the room/currently connected users info.

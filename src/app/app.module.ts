@@ -9,12 +9,14 @@ import { AppComponent } from './app.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { TestComponent } from './test/test.component';
 import { AudioContextService } from './audiocontext.service';
+import { ChatComponent } from './chatrooms/chat.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     DashboardComponent,
-    TestComponent
+    TestComponent,
+    ChatComponent
   ],
   imports: [
     BrowserModule,

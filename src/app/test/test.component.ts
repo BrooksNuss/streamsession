@@ -37,7 +37,6 @@ export class TestComponent implements AfterViewInit, OnInit{
 	@ViewChild("visCanvas") canvas: ElementRef;
 	canvasCtx: CanvasRenderingContext2D;
 
-
 	ngOnInit() {
 		this.distortion = new DistortionPedal(this.audioContextService);
 		this.reverb = new ReverbPedal(this.audioContextService);
