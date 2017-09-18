@@ -1,7 +1,7 @@
 <h2>Server testing</h2>
-<button md-button (click)="login()">login</button>
-<md-input-container>
-	<input mdInput #callInput>
-</md-input-container>
-<button md-button (click)="call()">Begin sending</button>
-<button md-button (click)="hangUp()">Stop sending</button>
+<input mdInput #input (keyup)="updateText(input.value)">
+<button md-button (click)="createConnection()">Start</button>
+<button md-button (click)="sendData()">Send</button>
+<button md-button (click)="closeDataChannels()">Stop</button>
+<h3>Chat Log</h3>
+<p #output></p>

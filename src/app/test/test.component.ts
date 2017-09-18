@@ -38,10 +38,19 @@ export class TestComponent implements AfterViewInit, OnInit{
 	canvasCtx: CanvasRenderingContext2D;
 
 	ngOnInit() {
+		//create a factory for handling pedal creation. This way,
+		//we don't have to pass in the service to each pedal.
+		//Similar to how audiocontext.createX works.
 		this.distortion = new DistortionPedal(this.audioContextService);
-		this.reverb = new ReverbPedal(this.audioContextService);
-		this.audioContextService.addPedal(this.distortion);
-		this.audioContextService.addPedal(this.reverb);
+		// this.reverb = new ReverbPedal(this.audioContextService);
+		// this.analyser = this.audioContext.createAnalyser();
+		// this.audioContextService.addPedal(this.distortion);
+		// this.audioContextService.addPedal(this.reverb);
+		// this.audioSource.connect(this.distortion.input);
+		// this.distortion.connect(this.reverb);
+		// this.reverb.connect(this.analyser);
+		// this.analyser.connect(this.audioContext.destination);
+		this.audioContextService.addNode(this.audioContext.destination);
 		this.pedalArr = this.audioContextService.pedalArr
 			.filter(node => node instanceof Pedal);
 	}
@@ -57,15 +66,9 @@ export class TestComponent implements AfterViewInit, OnInit{
 		// this.filter = this.audioContext.createBiquadFilter();
 		// this.gain = this.audioContext.createGain();
 		// this.reverb = this.audioContext.createConvolver();
-		this.analyser = this.audioContext.createAnalyser();
 		//compressor, distortion, eq/filter, pitch, modulation, volume, reverb
 		//distortion
 		//this.distortion.curve = this.makeDistortionCurve(this.distVal);
-		this.audioSource.connect(this.distortion.input);
-		this.distortion.connect(this.reverb);
-		this.reverb.connect(this.analyser);
-		this.analyser.connect(this.audioContext.destination);
-		this.audioContextService.addNode(this.audioContext.destination);
 
 		//filter
 		/*
