@@ -41,7 +41,7 @@ export class TestComponent implements AfterViewInit, OnInit{
 		//create a factory for handling pedal creation. This way,
 		//we don't have to pass in the service to each pedal.
 		//Similar to how audiocontext.createX works.
-		this.distortion = new DistortionPedal(this.audioContextService);
+		//this.distortion = new DistortionPedal(this.audioContextService);
 		// this.reverb = new ReverbPedal(this.audioContextService);
 		// this.analyser = this.audioContext.createAnalyser();
 		// this.audioContextService.addPedal(this.distortion);
@@ -50,7 +50,6 @@ export class TestComponent implements AfterViewInit, OnInit{
 		// this.distortion.connect(this.reverb);
 		// this.reverb.connect(this.analyser);
 		// this.analyser.connect(this.audioContext.destination);
-		this.audioContextService.addNode(this.audioContext.destination);
 		this.pedalArr = this.audioContextService.pedalArr
 			.filter(node => node instanceof Pedal);
 	}
@@ -62,6 +61,9 @@ export class TestComponent implements AfterViewInit, OnInit{
 		this.canvasElem.height*=2;
 		this.audioContext = this.audioContextService.getAudioContext();
 		this.audioSource = this.audioContextService.getAudioSource();
+		this.audioContextService.addNode(this.audioContext.destination);
+		this.analyser = this.audioContextService.pedalArr[
+			this.audioContextService.pedalArr.length - 2];
 		// this.distortion = this.audioContext.createWaveShaper();
 		// this.filter = this.audioContext.createBiquadFilter();
 		// this.gain = this.audioContext.createGain();
@@ -89,7 +91,7 @@ export class TestComponent implements AfterViewInit, OnInit{
 		*/
 		//analyser
 		//this.reverb.connect(this.audioContext.destination);
-		this.analyser.fftSize = 2048;
+		// this.analyser.fftSize = 2048;
 		this.dataArray = new Float32Array(this.analyser.fftSize);
 		//WIDTH = this.dataArray.length*2 ;/// 2;
 	}

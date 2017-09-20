@@ -56,6 +56,7 @@ export class DistortionPedal extends Pedal{
 	}
 
 	updateValues(event: any, index: number): void {
+		console.log("HELPDIST");
 		this[this.nodeData[index]] = event.value;
 		this.distNode.curve = this.makeDistortionCurve(this.Dist);
 		this.volumeNode.gain.value = .01 * this.Level;

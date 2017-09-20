@@ -2,9 +2,16 @@
 const express = require('express');
 const path = require('path');
 const http = require('http');
+const https = require('https');
 const bodyParser = require('body-parser');
 var os = require('os');
 var socketIO = require('socket.io');
+var fs = require('fs');
+
+var options = {
+   key: fs.readFileSync('./key.pem'),
+   cert: fs.readFileSync('./cert.pem')
+}
 
 // Get our API routes
 // const api = require('./server/routes/api');
@@ -29,20 +36,22 @@ app.get('*', (req, res) => {
 /**
  * Get port from environment and store in Express.
  */
-const port = process.env.PORT || '3000';
+const port = 3000;//process.env.PORT || '3000';
 app.set('port', port);
 
 /**
  * Create HTTP server.
  */
-const server = http.createServer(app);
+// const server = http.createServer(app).listen(port);
+const Sserver = https.createServer(options, app).listen(port);
 
 /**
  * Listen on provided port, on all network interfaces.
  */
-server.listen(port, () => console.log(`API running on localhost:${port}`));
+// server.listen(port, () => console.log(`API running on localhost:${port}`));
+// Sserver.listen(3100, () => console.log("HTTPS server on 3100"));
 
-var io = socketIO.listen(server);
+var io = socketIO.listen(Sserver);
 io.sockets.on('connection', function(socket) {
    // convenience function to log server messages on the client
   function log() {

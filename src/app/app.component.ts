@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { AudioContextService } from './audiocontext.service';
-import { Pedal } from '../pedals/pedal';
-import { DistortionPedal } from '../pedals/distortion.pedal';
-import { ReverbPedal } from '../pedals/reverb.pedal';
+import { Pedal } from './pedals/pedal';
+import { DistortionPedal } from './pedals/distortion.pedal';
+import { ReverbPedal } from './pedals/reverb.pedal';
 
 @Component({
   selector: 'app-root',
@@ -26,14 +26,17 @@ export class AppComponent {
 			this.audioSource = this.audioContext.createMediaStreamSource(mediaStream);
 			this.audioContextService.setAudioSource(this.audioSource);
       this.audioContextService.addNode(this.audioSource);
-      this.reverb = new ReverbPedal(this.audioContextService);
-      this.analyser = this.audioContext.createAnalyser();
-      this.audioContextService.addPedal(new DistortionPedal(this.audioContextService));
-      this.audioContextService.addPedal(new ReverbPedal(this.audioContextService));
-      this.audioSource.connect(this.distortion.input);
-      this.distortion.connect(this.reverb);
-      this.reverb.connect(this.analyser);
-      this.analyser.connect(this.audioContext.destination);
+      var reverb = new ReverbPedal(this.audioContextService);
+      var analyser = this.audioContext.createAnalyser();
+      var distortion = new DistortionPedal(this.audioContextService);
+      this.audioContextService.addPedal(distortion);
+      this.audioContextService.addPedal(reverb);
+      this.audioSource.connect(distortion.input);
+      distortion.connect(reverb);
+      reverb.connect(analyser);
+      analyser.connect(this.audioContext.destination);
+      this.audioContextService.streamDest = analyser
+        .connect(this.audioContext.createMediaStreamDestination());
 			this.audioInitCheck = true;
   	});
   }

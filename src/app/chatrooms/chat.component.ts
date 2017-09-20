@@ -47,11 +47,8 @@ export class ChatComponent implements AfterViewInit {
 	ngAfterViewInit(): void {
 		this.audioContext = this.audioContextService.getAudioContext();
 
-		this.streamDest = this.audioContext.createMediaStreamDestination();
+		this.streamDest = this.audioContextService.streamDest;
 		console.log(this.audioContextService.pedalArr);
-		this.audioContextService.pedalArr[
-			this.audioContextService.pedalArr.length - 2]
-			.connect(this.streamDest);
 		this.localStream = this.streamDest.stream;
 
 		this.sendMessage("Stream ready");

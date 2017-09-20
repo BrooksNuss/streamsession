@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 export class AudioContextService {
 	audioContext: AudioContext;
 	audioSource: MediaStreamAudioSourceNode;
+	streamDest;
 	pedalArr = [];
 
 	constructor(protected http: HttpClient){}

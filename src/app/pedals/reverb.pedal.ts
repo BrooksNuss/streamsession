@@ -51,6 +51,7 @@ export class ReverbPedal extends Pedal{
 	}
 
 	updateValues(event: any, index: number): void {
+		console.log("help", event, index);
 		this[this.nodeData[index]] = event.value;
 		this.volumeNode.gain.value = .01 * this.Level;
 		//acquire value between 0 and 5
