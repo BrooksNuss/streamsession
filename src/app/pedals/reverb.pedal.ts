@@ -17,8 +17,8 @@ export class ReverbPedal extends Pedal{
 	//Adjustable values for this pedal
 	//The names of these values should be pushed to nodeData
 	//	for proper display in the template and updating from template
-	Type = 0;
-	Level = 50;
+	// Type = 0;
+	// Level = 50;
 	bufferArr = [];
 	http:HttpClient;
 
@@ -43,19 +43,20 @@ export class ReverbPedal extends Pedal{
 
 		this.internalNodes.push(this.reverbNode);
 		this.internalNodes.push(this.reverbNode.connect(this.volumeNode));
-		this.nodeData.push({name: "Type", min: 1, max: 5});
-		this.nodeData.push({name: "Level", min: 1, max: 100});
+		this.nodeData.push({name: "Type", min: 1, max: 5, value:3});
+		this.nodeData.push({name: "Level", min: 1, max: 100, value:50});
 		for (var node of this.nodeData) {node.default = node.max/2;}
 		this.input = this.internalNodes[0];
 		this.output = this.internalNodes[this.internalNodes.length - 1];
 	}
 
 	updateValues(event: any, index: number): void {
-		console.log("help", event, index);
-		this[this.nodeData[index]] = event.value;
-		this.volumeNode.gain.value = .01 * this.Level;
-		//acquire value between 0 and 5
-		//this.Type = this.Type/20;
-		//this.reverbNode.buffer = this.bufferArr[this.Type];
+		var newVal = this.nodeData[index];
+		newVal.value = event.value;
+		if(newVal.name == "Type")
+			console.log("xd");
+			// this.distNode.curve = this.makeDistortionCurve(newVal.value);
+		else if(newVal.name == "Level")
+			this.volumeNode.gain.value = .01 * newVal.value;
 	}
 }

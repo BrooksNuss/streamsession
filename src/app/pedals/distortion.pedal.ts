@@ -16,8 +16,8 @@ export class DistortionPedal extends Pedal{
 	//Adjustable values for this pedal
 	//The names of these values should be pushed to nodeData
 	//	for proper display in the template and updating from template
-	Dist = 50;
-	Level = 50;
+	// Dist = 50;
+	// Level = 50;
 
 	constructor(protected audioContextService: AudioContextService){
 		super(audioContextService);
@@ -30,13 +30,14 @@ export class DistortionPedal extends Pedal{
 		this.internalNodes.push(this.distNode);
 		this.internalNodes.push(this.distNode.connect(this.volumeNode));
 		//Distortion parameters
-		this.nodeData.push({name: "Dist", min: 1, max: 100});
-		this.distNode.curve = this.makeDistortionCurve(this.Dist);
+		this.nodeData.push({name: "Dist", min: 1, max: 100, value:50});
+		this.distNode.curve = this.makeDistortionCurve(50);
 		this.distNode.oversample = '4x';
 		//Level parameters
-		this.nodeData.push({name: "Level", min: 1, max: 100});
+		this.nodeData.push({name: "Level", min: 1, max: 100, value:20});
 		for (var node of this.nodeData) {node.default = node.max/2;}
-		this.volumeNode.gain.value = .01 * this.Level;
+		this.volumeNode.gain.value = .01 * 50;
+
 		this.input = this.internalNodes[0];
 		this.output = this.internalNodes[this.internalNodes.length-1];
 	}
@@ -56,9 +57,11 @@ export class DistortionPedal extends Pedal{
 	}
 
 	updateValues(event: any, index: number): void {
-		console.log("HELPDIST");
-		this[this.nodeData[index]] = event.value;
-		this.distNode.curve = this.makeDistortionCurve(this.Dist);
-		this.volumeNode.gain.value = .01 * this.Level;
+		var newVal = this.nodeData[index];
+		newVal.value = event.value;
+		if(newVal.name == "Dist")
+			this.distNode.curve = this.makeDistortionCurve(newVal.value);
+		else if(newVal.name == "Level")
+			this.volumeNode.gain.value = .01 * newVal.value;
 	}
 }
