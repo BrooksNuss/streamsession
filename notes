@@ -3,3 +3,9 @@ like:
 <app> <angular loading wheel or something></> </app>
 
 for the final connection setup, storing a user's connection by using req.ip and then using that to send them the room/currently connected users info.
+
+when a new user connects to the room, broadcast a message to all connected users with the new user's info, so each of the clients can make a connection to the new user.
+
+store the client's connections in an array. Maybe one for incoming, one for outgoing. OR have an array of objects, each object has a name, an outgoing connection and an incoming connection.
+
+look into socket.io more, and start writing server code. once that's done, work on integrating the client code with it.

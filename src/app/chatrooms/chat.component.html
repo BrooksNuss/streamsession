@@ -1,7 +1,6 @@
 <h2>Server testing</h2>
 <input mdInput #input (keyup)="updateText(input.value)">
-<button md-button (click)="createConnection()">Start</button>
-<button md-button (click)="sendData()">Send</button>
-<button md-button (click)="closeDataChannels()">Stop</button>
+<button md-button (click)="start()">Initialize</button>
+<!-- <button md-button (click)="createConnection()">Create Connection</button> -->
 <h3>Chat Log</h3>
 <p #output></p>
