@@ -52,6 +52,8 @@ const Sserver = https.createServer(options, app).listen(port);
 // Sserver.listen(3100, () => console.log("HTTPS server on 3100"));
 
 var io = socketIO.listen(Sserver);
+var clients = [];
+//on new socket connection, watch for the following actions.
 io.sockets.on('connection', function(socket) {
    // convenience function to log server messages on the client
   function log() {
@@ -60,33 +62,43 @@ io.sockets.on('connection', function(socket) {
     socket.emit('log', array);
   }
 
-  socket.on('message', function(message) {
-    log('Client said: ', message);
-    // for a real app, would be room-only (not broadcast)
-    socket.broadcast.emit('message', message);
-  });
+  clients.push(socket);
+  if(clients.length > 1) {
+    socket.broadcast.emit('join', socket.id);
+  }
 
-  socket.on('create or join', function(room) {
-    log('Received request to create or join room ' + room);
+  //on clients sending message, broadcast it.
+  // socket.on('message', function(message) {
+  //   log('Client said: ', message);
+  //   // for a real app, would be room-only (not broadcast)
+  //   socket.broadcast.emit('message', message);
+  // });
 
-    var numClients = Object.keys(io.sockets.sockets).length;
-    log('Room ' + room + ' now has ' + numClients + ' client(s)');
+  //on client creating/joining room, tell other sockets that the 
+  //user has joined. If creating, tell the user that they created room.
+  // socket.on('create or join', function(room) {
+  //   log('Received request to create or join room ' + room);
 
-    if (numClients === 1) {
-      socket.join(room);
-      log('Client ID ' + socket.id + ' created room ' + room);
-      socket.emit('created', room, socket.id);
+  //   var numClients = Object.keys(io.sockets.sockets).length;
+  //   log('Room ' + room + ' now has ' + numClients + ' client(s)');
 
-    } else if (numClients >1 && numClients <5 ) {
-      log('Client ID ' + socket.id + ' joined room ' + room);
-      io.sockets.in(room).emit('join', room);
-      socket.join(room);
-      socket.emit('joined', room, socket.id);
-      io.sockets.in(room).emit('ready');
-    } else { // max two clients
-      socket.emit('full', room);
-    }
-  });
+  //   if (numClients === 1) {
+  //     socket.join(room);
+  //     log('Client ID ' + socket.id + ' created room ' + room);
+  //     clients.push(socket.id);
+  //     socket.emit('created', room, socket.id);
+
+  //   } else if (numClients >1 && numClients <5 ) {
+  //     log('Client ID ' + socket.id + ' joined room ' + room);
+  //     io.sockets.in(room).emit('join', room);
+  //     socket.join(room);
+  //     clients.push(socket.id);
+  //     socket.emit('joined', room, socket.id);
+  //     io.sockets.in(room).emit('ready');
+  //   } else { // max 5 clients
+  //     socket.emit('full', room);
+  //   }
+  // });
 
   socket.on('ipaddr', function() {
     var ifaces = os.networkInterfaces();
@@ -99,7 +111,7 @@ io.sockets.on('connection', function(socket) {
     }
   });
 
-  socket.on('bye', function(){
+  socket.on('disconnect', function(){
     console.log('received bye');
   });
 })

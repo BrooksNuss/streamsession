@@ -9,3 +9,5 @@ when a new user connects to the room, broadcast a message to all connected users
 store the client's connections in an array. Maybe one for incoming, one for outgoing. OR have an array of objects, each object has a name, an outgoing connection and an incoming connection.
 
 look into socket.io more, and start writing server code. once that's done, work on integrating the client code with it.
+
+client connects then all other clients send the new client an offer.

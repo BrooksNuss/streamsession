@@ -8,7 +8,7 @@ import * as io from 'socket.io-client';
   templateUrl: './chat.component.html'
 })
 
-export class ChatComponent implements AfterViewInit {
+export class ChatComponent implements AfterViewInit, OnDestroy {
 	audioContext:AudioContext;
 	localStream;
 	streamDest:MediaStreamAudioDestinationNode;
@@ -17,6 +17,8 @@ export class ChatComponent implements AfterViewInit {
 	yourConn; 
 	stream;
 	conn;
+	connections;
+	numConnections = -1;
 	pcConfig = {
   	'iceServers': [{
     'urls': 'stun:stun.l.google.com:19302'
@@ -26,8 +28,6 @@ export class ChatComponent implements AfterViewInit {
 	  offerToReceiveAudio: true,
 	  offerToReceiveVideo: false
 	};
-
-	socket = io.connect();
 
 	constructor(protected audioContextService: AudioContextService){}
 
@@ -39,157 +39,123 @@ export class ChatComponent implements AfterViewInit {
 		this.streamDest = this.audioContextService.streamDest;
 		this.localStream = this.streamDest.stream;
 		console.log("Got local audio stream");
+		this.connections = [];
+		this.start();
+	}
+
+	ngOnDestroy() {
+		this.sendMessage('disconnect', '');
 	}
  
- 	start() {
-	//connecting to our signaling server 
-	this.conn = new WebSocket('ws://localhost:9090');
-	 
-	this.conn.onopen = function () { 
-	   console.log("Connected to the signaling server"); 
-	};
-	 
-	//when we got a message from a signaling server 
-	this.conn.onmessage = function (msg) { 
-	   console.log("Got message", msg.data); 
-	   var data = JSON.parse(msg.data); 
-		
-	   switch(data.type) { 
-	      case "login": 
-	         this.handleLogin(data.success); 
-	         break; 
-	      //when somebody wants to call us 
-	      case "offer": 
-	         this.handleOffer(data.offer, data.name); 
-	         break; 
-	      case "answer": 
-	         this.handleAnswer(data.answer); 
-	         break; 
-	      //when a remote peer sends an ice candidate to us 
-	      case "candidate": 
-	         this.handleCandidate(data.candidate); 
-	         break; 
-	      case "leave": 
-	         this.handleLeave(); 
-	         break; 
-	      default: 
-	         break; 
-	   } 
-	}; 
+	// Could prompt for room name:
+	// room = prompt('Enter room name:');
 
-		this.conn.onerror = function (err) { 
-		   console.log("Got error", err); 
-		};
+	socket = io.connect();
+	start() {
+		this.socket.on('join', socket => {
+			//create peer connection.
+			//add listeners.
+			var pc:RTCPeerConnection;
+			pc = this.createPeerConnection(socket);
+			pc.addStream(this.localStream);
+			this.createOffer(pc, socket);
+		})
+
+		this.socket.on('offer', message => {
+			var pc = this.connections[this.connections.findIndex(
+				conn => conn.id == message.socket)].peerConn;
+		})
+
+		this.socket.on('message', function(message) {
+		  console.log('Client received message:', message);
+		  if (message === 'got user media') {
+		    this.maybeStart();
+		  } else if (message.type === 'offer') {
+		    if (!this.isInitiator && !this.isStarted) {
+		      this.maybeStart();
+		    }
+		    this.pc.setRemoteDescription(new RTCSessionDescription(message));
+		    this.doAnswer();
+		  } else if (message.type === 'answer' && this.isStarted) {
+		    this.pc.setRemoteDescription(new RTCSessionDescription(message));
+		  } else if (message.type === 'candidate' && this.isStarted) {
+		    var candidate = new RTCIceCandidate({
+		      sdpMLineIndex: message.label,
+		      candidate: message.candidate
+		    });
+		    this.pc.addIceCandidate(candidate);
+		  } else if (message === 'bye' && this.isStarted) {
+		    this.handleRemoteHangup();
+		  }
+		});
 	}
-	 
-	//alias for sending JSON encoded messages 
-	send(message) { 
-	   //attach the other peer username to our messages 
-	   if (this.connectedUser) { 
-	      message.name = this.connectedUser; 
-	   } 
 		
-	   this.conn.send(JSON.stringify(message)); 
-	};
-	 
-	//****** 
-	//UI selectors block 
-	//****** 
+	//alias for sending JSON encoded messages  
+	sendMessage(type, message) {
+	  console.log('Client sending message: ', message);
+	  this.socket.emit(type, message);
+	}
 
-	// var loginPage = document.querySelector('#loginPage'); 
-	// var usernameInput = document.querySelector('#usernameInput'); 
-	// var loginBtn = document.querySelector('#loginBtn');
-
-	// var callPage = document.querySelector('#callPage'); 
-	// var callToUsernameInput = document.querySelector('#callToUsernameInput');
-	// var callBtn = document.querySelector('#callBtn'); 
-
-	// var hangUpBtn = document.querySelector('#hangUpBtn'); 
-	// var localAudio = document.querySelector('#localAudio'); 
-	// var remoteAudio = document.querySelector('#remoteAudio'); 
-
-
-	// callPage.style.display = "none";
-	 
-	// Login when the user clicks the button 
-	login() { 
-	   this.name = "user"; 
-		
-	   if (this.name.length > 0) { 
-	      this.send({ 
-	         type: "login", 
-	         name: name 
-	      }); 
-	   } 
-		
-	};
-	 
-	handleLogin(success) { 
-	   if (success === false) { 
-	      alert("Ooops...try a different username"); 
-	   } else { 
-	      // loginPage.style.display = "none"; 
-	      // callPage.style.display = "block"; 
+	createPeerConnection(socket) {
+		var pc:RTCPeerConnection;
+		var localThis = this;
+		try {
+			this.numConnections++;
+			this.connections.splice(this.numConnections, 0, {
+				id: socket,
+				peerConn: pc
+			})
+			pc = new RTCPeerConnection(null);
+			pc.onicecandidate = handleIceCandidate;
+			pc.onaddstream = handleRemoteStreamAdded;
+			pc.onremovestream = handleRemoteStreamRemoved;
 			
-	      //********************** 
-	      //Starting a peer connection 
-	      //********************** 
-			
-	      //getting local audio stream 
-        this.stream = this.streamDest.stream; 
-		
-        //using Google public stun server 
-        var configuration = { 
-           "iceServers": [{ "url": "stun:stun2.1.google.com:19302" }] 
-        }; 
-		
-        this.yourConn = new webkitRTCPeerConnection(configuration); 
-		
-        // setup stream listening 
-        this.yourConn.addStream(this.stream); 
-		
-        //when a remote user adds stream to the peer connection, we display it 
-        this.yourConn.onaddstream = incStream => { 
-           // remoteAudio.src = window.URL.createObjectURL(e.stream);
-           this.incStreamNode = this.audioContext
-           	.createMediaStreamSource(incStream.stream);
+			console.log("Created RTCPeerConnection");
+			return pc;
+		} catch(e) {
+			console.log("Failed to createRTCPC", e.message);
+		}
 
-           //create source
-        }; 
-		
-        // Setup ice handling 
-        this.yourConn.onicecandidate = event => { 
-           if (event.candidate) { 
-              this.send({ 
-                 type: "candidate", 
-                 candidate: event.candidate 
-              }); 
-           } 
-        }; 
-	   } 
-	};
-	 
-	//initiating a call 
-	call() { 
-	   var callToUsername = callToUsernameInput.value; 
-		
-	   if (callToUsername.length > 0) { 
-	      connectedUser = callToUsername; 
-			
-	      // create an offer 
-	      yourConn.createOffer(function (offer) { 
-	         send({
-	            type: "offer", 
-	            offer: offer 
-	         }); 
-				
-	         yourConn.setLocalDescription(offer); 
-	      }, function (error) { 
-	         alert("Error when creating an offer"); 
-	      }); 
-	   } 
-	};
-	 
+
+		function handleIceCandidate(event) {
+			console.log("icecandidate event", event);
+			if(event.candidate) {
+				localThis.sendMessage('candidate', {
+					label: event.candidate.sdpMLineIndex,
+					id: event.candidate.sdpMid,
+					candidate: event.candidate.candidate
+				});
+			} else {
+				console.log("end of candidates");
+			}
+		}
+
+		function handleRemoteStreamAdded(event) {
+			var remStreamNode;
+			remStreamNode = localThis.audioContext.createMediaStreamSource(event.stream);
+			localThis.connections[localThis.numConnections].inStream = remStreamNode;
+			remStreamNode.connect(localThis.audioContext.destination);
+			console.log("remote stream added");
+		}
+
+		function handleRemoteStreamRemoved(event) {
+			console.log("remote stream removed"+event);
+		}
+	}
+
+	createOffer(pc, socket) {
+		// pc = this.connections.findIndex(conn => conn.name == socket.id );
+		var localThis = this;
+		pc.createOffer(setLocalAndSendMessage);
+
+		function setLocalAndSendMessage(sessionDescription) {
+			pc.setLocalDescription(sessionDescription);
+			console.log("Set local description and sending msg", sessionDescription);
+			localThis.sendMessage('offer', 
+				{socket: socket, message: sessionDescription});
+		}
+	}
+
 	//when somebody sends us an offer 
 	handleOffer(offer, name) { 
 	   this.connectedUser = name; 
