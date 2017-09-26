@@ -44,7 +44,7 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		this.sendMessage('disconnect', '');
+		this.sendMessage('disconnect', {socket: this.socket.id});
 	}
  
 	// Could prompt for room name:
@@ -53,6 +53,7 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 	socket = io.connect();
 	start() {
 		this.socket.on('join', socket => {
+			console.log("received join");
 			//create peer connection.
 			//add listeners.
 			var pc:RTCPeerConnection;
@@ -62,32 +63,64 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 		})
 
 		this.socket.on('offer', message => {
-			var pc = this.connections[this.connections.findIndex(
+			console.log("received offer");
+			var pc:RTCPeerConnection;
+			pc = this.connections[this.connections.findIndex(
 				conn => conn.id == message.socket)].peerConn;
+			pc.setRemoteDescription(new RTCSessionDescription(message.message));
 		})
 
-		this.socket.on('message', function(message) {
-		  console.log('Client received message:', message);
-		  if (message === 'got user media') {
-		    this.maybeStart();
-		  } else if (message.type === 'offer') {
-		    if (!this.isInitiator && !this.isStarted) {
-		      this.maybeStart();
-		    }
-		    this.pc.setRemoteDescription(new RTCSessionDescription(message));
-		    this.doAnswer();
-		  } else if (message.type === 'answer' && this.isStarted) {
-		    this.pc.setRemoteDescription(new RTCSessionDescription(message));
-		  } else if (message.type === 'candidate' && this.isStarted) {
-		    var candidate = new RTCIceCandidate({
-		      sdpMLineIndex: message.label,
-		      candidate: message.candidate
-		    });
-		    this.pc.addIceCandidate(candidate);
-		  } else if (message === 'bye' && this.isStarted) {
-		    this.handleRemoteHangup();
-		  }
-		});
+		this.socket.on('answer', message => {
+			console.log("received answer");
+			var pc:RTCPeerConnection;
+			pc = this.connections[this.connections.findIndex(
+				conn => conn.id == message.socket)].peerConn;
+			pc.setRemoteDescription(new RTCSessionDescription(message.message));
+		})
+
+		this.socket.on('candidate', message => {
+			console.log("received candidate");
+			var pc:RTCPeerConnection;
+			pc = this.connections[this.connections.findIndex(
+				conn => conn.id == message.socket)].peerConn;
+			var candidate = new RTCIceCandidate({
+				sdpMLineIndex: message.label,
+				candidate: message.candidate
+			});
+			pc.addIceCandidate(candidate);
+		})
+
+		this.socket.on('disconnect', message => {
+			console.log("received disconnect");
+			var pc:RTCPeerConnection;
+			pc = this.connections[this.connections.findIndex(
+				conn => conn.id == message.socket)].peerConn;
+			pc.close();
+			pc = null;
+		})
+
+		// this.socket.on('message', function(message) {
+		//   console.log('Client received message:', message);
+		//   if (message === 'got user media') {
+		//     this.maybeStart();
+		//   } else if (message.type === 'offer') {
+		//     if (!this.isInitiator && !this.isStarted) {
+		//       this.maybeStart();
+		//     }
+		//     this.pc.setRemoteDescription(new RTCSessionDescription(message));
+		//     this.doAnswer();
+		//   } else if (message.type === 'answer' && this.isStarted) {
+		//     this.pc.setRemoteDescription(new RTCSessionDescription(message));
+		//   } else if (message.type === 'candidate' && this.isStarted) {
+		//     var candidate = new RTCIceCandidate({
+		//       sdpMLineIndex: message.label,
+		//       candidate: message.candidate
+		//     });
+		//     this.pc.addIceCandidate(candidate);
+		//   } else if (message === 'bye' && this.isStarted) {
+		//     this.handleRemoteHangup();
+		//   }
+		// });
 	}
 		
 	//alias for sending JSON encoded messages  
@@ -123,8 +156,10 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 				localThis.sendMessage('candidate', {
 					label: event.candidate.sdpMLineIndex,
 					id: event.candidate.sdpMid,
-					candidate: event.candidate.candidate
+					candidate: event.candidate.candidate,
+					socket: socket
 				});
+				console.log("sending candidate to "+socket);
 			} else {
 				console.log("end of candidates");
 			}
@@ -143,64 +178,18 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 		}
 	}
 
-	createOffer(pc, socket) {
+	createOffer(pc: RTCPeerConnection, socket) {
 		// pc = this.connections.findIndex(conn => conn.name == socket.id );
+		console.log("attempting to create offer to "+socket);
+
 		var localThis = this;
-		pc.createOffer(setLocalAndSendMessage);
+		pc.createOffer().then(setLocalAndSendMessage);
 
 		function setLocalAndSendMessage(sessionDescription) {
 			pc.setLocalDescription(sessionDescription);
 			console.log("Set local description and sending msg", sessionDescription);
 			localThis.sendMessage('offer', 
-				{socket: socket, message: sessionDescription});
+				{socket: socket, from: localThis.socket.id, message: sessionDescription});
 		}
 	}
-
-	//when somebody sends us an offer 
-	handleOffer(offer, name) { 
-	   this.connectedUser = name; 
-	   this.yourConn.setRemoteDescription(new RTCSessionDescription(offer)); 
-		
-	   //create an answer to an offer 
-	   this.yourConn.createAnswer(function (answer) { 
-	      this.yourConn.setLocalDescription(answer); 
-			
-	      this.send({ 
-	         type: "answer", 
-	         answer: answer 
-	      });
-			
-	   }, function (error) { 
-	      alert("Error when creating an answer"); 
-	   }); 
-		
-	};
-	 
-	//when we got an answer from a remote user 
-	handleAnswer(answer) { 
-	   this.yourConn.setRemoteDescription(new RTCSessionDescription(answer)); 
-	};
-	 
-	//when we got an ice candidate from a remote user 
-	handleCandidate(candidate) { 
-	   this.yourConn.addIceCandidate(new RTCIceCandidate(candidate)); 
-	};
-	 
-	//hang up
-	hangup() { 
-	   this.send({ 
-	      type: "leave" 
-	   }); 
-		
-	   this.handleLeave(); 
-	};
-	 
-	handleLeave() { 
-	   this.connectedUser = null; 
-		
-	   this.yourConn.close(); 
-	   this.yourConn.onicecandidate = null; 
-	   this.yourConn.onaddstream = null; 
-	};
-
 }

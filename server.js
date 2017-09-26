@@ -56,16 +56,30 @@ var clients = [];
 //on new socket connection, watch for the following actions.
 io.sockets.on('connection', function(socket) {
    // convenience function to log server messages on the client
-  function log() {
-    var array = ['Message from server:'];
-    array.push.apply(array, arguments);
-    socket.emit('log', array);
-  }
+  // function log() {
+  //   var array = ['Message from server:'];
+  //   array.push.apply(array, arguments);
+  //   socket.emit('log', array);
+  // }
 
   clients.push(socket);
   if(clients.length > 1) {
     socket.broadcast.emit('join', socket.id);
   }
+  console.log("client connected: "+socket.id);
+  console.log("current clients: "+clients.length);
+
+  socket.on('offer', () => {
+    console.log("received offer");
+  })
+
+  socket.on('answer', () => {
+    console.log("received answer");
+  })
+
+  socket.on('candidate', () => {
+    console.log("received candidate");
+  })
 
   //on clients sending message, broadcast it.
   // socket.on('message', function(message) {
@@ -112,6 +126,6 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on('disconnect', function(){
-    console.log('received bye');
+    console.log('received dc');
   });
 })
