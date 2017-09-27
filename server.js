@@ -69,16 +69,19 @@ io.sockets.on('connection', function(socket) {
   console.log("client connected: "+socket.id);
   console.log("current clients: "+clients.length);
 
-  socket.on('offer', () => {
+  socket.on('offer', (message) => {
     console.log("received offer");
+    socket.broadcast.to(message.socket).emit('offer', message);
   })
 
-  socket.on('answer', () => {
+  socket.on('answer', (message) => {
     console.log("received answer");
+    socket.broadcast.to(message.socket).emit('answer', message);
   })
 
-  socket.on('candidate', () => {
+  socket.on('candidate', (message) => {
     console.log("received candidate");
+    socket.broadcast.to(message.socket).emit('candidate', message);
   })
 
   //on clients sending message, broadcast it.

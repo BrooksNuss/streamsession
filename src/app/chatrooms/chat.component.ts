@@ -65,8 +65,14 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 		this.socket.on('offer', message => {
 			console.log("received offer");
 			var pc:RTCPeerConnection;
-			pc = this.connections[this.connections.findIndex(
-				conn => conn.id == message.socket)].peerConn;
+			//If we already have a connection with this user, retreive it.
+			//Otherwise, create a new one
+			if(this.connections.findIndex(conn => conn.id == message.socket) != -1){
+				pc = this.connections[this.connections.findIndex(
+					conn => conn.id == message.socket)].peerConn;
+			} else {
+				pc = this.createPeerConnection(message.socket);
+			}
 			pc.setRemoteDescription(new RTCSessionDescription(message.message));
 		})
 
@@ -76,6 +82,7 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 			pc = this.connections[this.connections.findIndex(
 				conn => conn.id == message.socket)].peerConn;
 			pc.setRemoteDescription(new RTCSessionDescription(message.message));
+			this.createOffer(pc, message.socket);
 		})
 
 		this.socket.on('candidate', message => {
@@ -125,7 +132,7 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 		
 	//alias for sending JSON encoded messages  
 	sendMessage(type, message) {
-	  console.log('Client sending message: ', message);
+	  // console.log('Client sending message: ', message);
 	  this.socket.emit(type, message);
 	}
 
@@ -134,14 +141,14 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 		var localThis = this;
 		try {
 			this.numConnections++;
+			pc = new RTCPeerConnection(this.pcConfig);
+			pc.onicecandidate = handleIceCandidate;
+			pc.onaddstream = handleRemoteStreamAdded;
+			pc.onremovestream = handleRemoteStreamRemoved;
 			this.connections.splice(this.numConnections, 0, {
 				id: socket,
 				peerConn: pc
 			})
-			pc = new RTCPeerConnection(null);
-			pc.onicecandidate = handleIceCandidate;
-			pc.onaddstream = handleRemoteStreamAdded;
-			pc.onremovestream = handleRemoteStreamRemoved;
 			
 			console.log("Created RTCPeerConnection");
 			return pc;
@@ -151,15 +158,16 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 
 
 		function handleIceCandidate(event) {
-			console.log("icecandidate event", event);
+			// console.log("icecandidate event", event);
 			if(event.candidate) {
 				localThis.sendMessage('candidate', {
 					label: event.candidate.sdpMLineIndex,
 					id: event.candidate.sdpMid,
 					candidate: event.candidate.candidate,
-					socket: socket
+					socket: socket,
+					from: localThis.socket.id
 				});
-				console.log("sending candidate to "+socket);
+				// console.log("sending candidate to "+socket);
 			} else {
 				console.log("end of candidates");
 			}
@@ -168,6 +176,8 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 		function handleRemoteStreamAdded(event) {
 			var remStreamNode;
 			remStreamNode = localThis.audioContext.createMediaStreamSource(event.stream);
+			console.log(remStreamNode);
+			console.log(localThis.audioContext.destination);
 			localThis.connections[localThis.numConnections].inStream = remStreamNode;
 			remStreamNode.connect(localThis.audioContext.destination);
 			console.log("remote stream added");
@@ -187,7 +197,7 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 
 		function setLocalAndSendMessage(sessionDescription) {
 			pc.setLocalDescription(sessionDescription);
-			console.log("Set local description and sending msg", sessionDescription);
+			// console.log("Set local description and sending msg", sessionDescription);
 			localThis.sendMessage('offer', 
 				{socket: socket, from: localThis.socket.id, message: sessionDescription});
 		}
