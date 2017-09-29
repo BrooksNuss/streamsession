@@ -64,7 +64,7 @@ io.sockets.on('connection', function(socket) {
 
   clients.push(socket);
   if(clients.length > 1) {
-    socket.broadcast.emit('join', socket.id);
+    socket.broadcast.emit('join', {from: socket.id});
   }
   console.log("client connected: "+socket.id);
   console.log("current clients: "+clients.length);

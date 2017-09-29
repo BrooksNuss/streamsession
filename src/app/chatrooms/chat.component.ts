@@ -52,14 +52,14 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 
 	socket = io.connect();
 	start() {
-		this.socket.on('join', socket => {
+		this.socket.on('join', message => {
 			console.log("received join");
 			//create peer connection.
 			//add listeners.
 			var pc:RTCPeerConnection;
-			pc = this.createPeerConnection(socket);
-			pc.addStream(this.localStream);
-			this.createOffer(pc, socket);
+			pc = this.createPeerConnection(message);
+			// pc.addStream(this.localStream);
+			this.createOffer(pc, message);
 		})
 
 		this.socket.on('offer', message => {
@@ -69,27 +69,27 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 			//Otherwise, create a new one
 			if(this.connections.findIndex(conn => conn.id == message.socket) != -1){
 				pc = this.connections[this.connections.findIndex(
-					conn => conn.id == message.socket)].peerConn;
+					conn => conn.id == message.from)].peerConn;
 			} else {
-				pc = this.createPeerConnection(message.socket);
+				pc = this.createPeerConnection(message);
 			}
 			pc.setRemoteDescription(new RTCSessionDescription(message.message));
+			this.createAnswer(pc, message);
 		})
 
 		this.socket.on('answer', message => {
 			console.log("received answer");
 			var pc:RTCPeerConnection;
 			pc = this.connections[this.connections.findIndex(
-				conn => conn.id == message.socket)].peerConn;
+				conn => conn.id == message.from)].peerConn;
 			pc.setRemoteDescription(new RTCSessionDescription(message.message));
-			this.createOffer(pc, message.socket);
 		})
 
 		this.socket.on('candidate', message => {
 			console.log("received candidate");
 			var pc:RTCPeerConnection;
 			pc = this.connections[this.connections.findIndex(
-				conn => conn.id == message.socket)].peerConn;
+				conn => conn.id == message.from)].peerConn;
 			var candidate = new RTCIceCandidate({
 				sdpMLineIndex: message.label,
 				candidate: message.candidate
@@ -101,33 +101,10 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 			console.log("received disconnect");
 			var pc:RTCPeerConnection;
 			pc = this.connections[this.connections.findIndex(
-				conn => conn.id == message.socket)].peerConn;
+				conn => conn.id == message.from)].peerConn;
 			pc.close();
 			pc = null;
 		})
-
-		// this.socket.on('message', function(message) {
-		//   console.log('Client received message:', message);
-		//   if (message === 'got user media') {
-		//     this.maybeStart();
-		//   } else if (message.type === 'offer') {
-		//     if (!this.isInitiator && !this.isStarted) {
-		//       this.maybeStart();
-		//     }
-		//     this.pc.setRemoteDescription(new RTCSessionDescription(message));
-		//     this.doAnswer();
-		//   } else if (message.type === 'answer' && this.isStarted) {
-		//     this.pc.setRemoteDescription(new RTCSessionDescription(message));
-		//   } else if (message.type === 'candidate' && this.isStarted) {
-		//     var candidate = new RTCIceCandidate({
-		//       sdpMLineIndex: message.label,
-		//       candidate: message.candidate
-		//     });
-		//     this.pc.addIceCandidate(candidate);
-		//   } else if (message === 'bye' && this.isStarted) {
-		//     this.handleRemoteHangup();
-		//   }
-		// });
 	}
 		
 	//alias for sending JSON encoded messages  
@@ -146,16 +123,15 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 			pc.onaddstream = handleRemoteStreamAdded;
 			pc.onremovestream = handleRemoteStreamRemoved;
 			this.connections.splice(this.numConnections, 0, {
-				id: socket,
+				id: socket.from,
 				peerConn: pc
 			})
-			
+			pc.addStream(this.localStream);
 			console.log("Created RTCPeerConnection");
 			return pc;
 		} catch(e) {
 			console.log("Failed to createRTCPC", e.message);
 		}
-
 
 		function handleIceCandidate(event) {
 			// console.log("icecandidate event", event);
@@ -164,7 +140,7 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 					label: event.candidate.sdpMLineIndex,
 					id: event.candidate.sdpMid,
 					candidate: event.candidate.candidate,
-					socket: socket,
+					socket: socket.from,
 					from: localThis.socket.id
 				});
 				// console.log("sending candidate to "+socket);
@@ -176,8 +152,6 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 		function handleRemoteStreamAdded(event) {
 			var remStreamNode;
 			remStreamNode = localThis.audioContext.createMediaStreamSource(event.stream);
-			console.log(remStreamNode);
-			console.log(localThis.audioContext.destination);
 			localThis.connections[localThis.numConnections].inStream = remStreamNode;
 			remStreamNode.connect(localThis.audioContext.destination);
 			console.log("remote stream added");
@@ -188,9 +162,9 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 		}
 	}
 
-	createOffer(pc: RTCPeerConnection, socket) {
+	createOffer(pc: RTCPeerConnection, message) {
 		// pc = this.connections.findIndex(conn => conn.name == socket.id );
-		console.log("attempting to create offer to "+socket);
+		console.log("attempting to create offer to "+message.from);
 
 		var localThis = this;
 		pc.createOffer().then(setLocalAndSendMessage);
@@ -199,7 +173,21 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 			pc.setLocalDescription(sessionDescription);
 			// console.log("Set local description and sending msg", sessionDescription);
 			localThis.sendMessage('offer', 
-				{socket: socket, from: localThis.socket.id, message: sessionDescription});
+				{socket: message.from, from: localThis.socket.id, message: sessionDescription});
+		}
+	}
+
+	createAnswer(pc: RTCPeerConnection, message) {
+		console.log("attempting to create answer to "+message.from);
+
+		var localThis = this;
+		pc.createAnswer().then(setLocalAndSendMessage);
+
+		function setLocalAndSendMessage(sessionDescription) {
+			pc.setLocalDescription(sessionDescription);
+			// console.log("Set local description and sending msg", sessionDescription);
+			localThis.sendMessage('answer', 
+				{socket: message.from, from: localThis.socket.id, message: sessionDescription});
 		}
 	}
 }
