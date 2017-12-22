@@ -19,6 +19,7 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 	conn;
 	connections;
 	numConnections = -1;
+	socket = io.connect();
 	pcConfig = {
   	'iceServers': [{
     'urls': 'stun:stun.l.google.com:19302'
@@ -44,16 +45,16 @@ export class ChatComponent implements AfterViewInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		this.sendMessage('disconnect', {socket: this.socket.id});
+		this.sendMessage('dc', {socket: this.socket, test: 'test'});
 	}
  
 	// Could prompt for room name:
 	// room = prompt('Enter room name:');
 
-	socket = io.connect();
 	start() {
 		this.socket.on('join', message => {
 			console.log("received join");
+			console.log(this.socket);
 			//create peer connection.
 			//add listeners.
 			var pc:RTCPeerConnection;

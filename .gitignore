@@ -42,3 +42,4 @@ src/assets/impulses
 # System Files
 .DS_Store
 Thumbs.db
+*.pfx

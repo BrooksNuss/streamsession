@@ -9,8 +9,10 @@ var socketIO = require('socket.io');
 var fs = require('fs');
 
 var options = {
-   key: fs.readFileSync('./key.pem'),
-   cert: fs.readFileSync('./cert.pem')
+  // key: fs.readFileSync('./key.pem'),
+  // cert: fs.readFileSync('./cert.pem')
+  pfx: fs.readFileSync('./testCert.pfx'),
+  passphrase: 'test123'
 }
 
 // Get our API routes
@@ -44,6 +46,7 @@ app.set('port', port);
  */
 // const server = http.createServer(app).listen(port);
 const Sserver = https.createServer(options, app).listen(port);
+console.log("HTTPS server listening on port "+port);
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -128,7 +131,9 @@ io.sockets.on('connection', function(socket) {
     }
   });
 
-  socket.on('disconnect', function(){
-    console.log('received dc');
+  socket.on('dc', (message) =>{
+    console.log(message);
+    console.log('received dc from '+message.socket);
+    clients.splice(clients.findIndex(item => item.socket = message.socket))
   });
 })

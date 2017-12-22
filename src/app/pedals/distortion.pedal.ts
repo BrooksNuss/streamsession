@@ -27,19 +27,23 @@ export class DistortionPedal extends Pedal{
 		this.pedalName = "Distortion";
 		this.distNode = this.audioContext.createWaveShaper();
 		this.volumeNode = this.audioContext.createGain();
-		this.internalNodes.push(this.distNode);
-		this.internalNodes.push(this.distNode.connect(this.volumeNode));
+		// this.mainChannel.connect(this.distNode.connect(this.volumeNode.connect(this.output)));
+		this.mainChannel.connect(this.distNode);
+		this.distNode.connect(this.volumeNode);
+		this.volumeNode.connect(this.output);
+		// this.internalNodes.push(this.distNode);
+		// this.internalNodes.push(this.distNode.connect(this.volumeNode));
 		//Distortion parameters
 		this.nodeData.push({name: "Dist", min: 1, max: 100, value:50});
 		this.distNode.curve = this.makeDistortionCurve(50);
 		this.distNode.oversample = '4x';
 		//Level parameters
-		this.nodeData.push({name: "Level", min: 1, max: 100, value:20});
+		this.nodeData.push({name: "Level", min: 1, max: 100, value:50});
 		for (var node of this.nodeData) {node.default = node.max/2;}
 		this.volumeNode.gain.value = .01 * 50;
 
-		this.input = this.internalNodes[0];
-		this.output = this.internalNodes[this.internalNodes.length-1];
+		// this.input = this.internalNodes[0];
+		// this.output = this.internalNodes[this.internalNodes.length-1];
 	}
 
 	makeDistortionCurve(amount) {

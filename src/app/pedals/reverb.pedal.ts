@@ -29,6 +29,10 @@ export class ReverbPedal extends Pedal{
 		this.pedalName = "Reverb";
 		this.reverbNode = this.audioContext.createConvolver();
 		this.volumeNode = this.audioContext.createGain();
+		// this.mainChannel.connect(this.reverbNode.connect(this.volumeNode.connect(this.output)));
+		this.mainChannel.connect(this.reverbNode);
+		this.reverbNode.connect(this.volumeNode);
+		this.volumeNode.connect(this.output);
 
 		this.reverbNode.normalize = false;
 		var source = this.audioContext.createBufferSource();
@@ -41,13 +45,13 @@ export class ReverbPedal extends Pedal{
 			}
 		);
 
-		this.internalNodes.push(this.reverbNode);
-		this.internalNodes.push(this.reverbNode.connect(this.volumeNode));
+		// this.internalNodes.push(this.reverbNode);
+		// this.internalNodes.push(this.reverbNode.connect(this.volumeNode));
 		this.nodeData.push({name: "Type", min: 1, max: 5, value:3});
 		this.nodeData.push({name: "Level", min: 1, max: 100, value:50});
 		for (var node of this.nodeData) {node.default = node.max/2;}
-		this.input = this.internalNodes[0];
-		this.output = this.internalNodes[this.internalNodes.length - 1];
+		// this.input = this.internalNodes[0];
+		// this.output = this.internalNodes[this.internalNodes.length - 1];
 	}
 
 	updateValues(event: any, index: number): void {
